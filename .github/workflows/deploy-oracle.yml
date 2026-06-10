@@ -112,3 +112,6 @@ jobs:
     steps:
       - name: API load balancer health
         run: curl -fsS --retry 20 --retry-delay 2 https://api.mightysweetbakingco.services.deployim.com/health
+
+      - name: Frontend load balancer health
+        run: curl -fsS --retry 20 --retry-delay 2 https://p1.wolfassets.org/_health
