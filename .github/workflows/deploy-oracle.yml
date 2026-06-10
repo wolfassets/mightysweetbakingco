@@ -60,22 +60,12 @@ jobs:
       matrix:
         include:
           - name: node-a
-            host: toronto-deployim-node-a.jaglion-ionian.ts.net
+            host: 150.230.27.121
           - name: node-b
-            host: toronto-deployim-node-b.jaglion-ionian.ts.net
+            host: 147.5.108.22
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Join Tailscale
-        uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          hostname: gha-mightysweet-${{ matrix.name }}-${{ github.run_id }}
-          targets: ${{ matrix.host }}
-          version: latest
 
       - name: Write SSH key
         run: |

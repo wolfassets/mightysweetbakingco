@@ -6,8 +6,8 @@ GitHub Actions workflow:
 
 Deploy targets:
 
-- `toronto-deployim-node-a.jaglion-ionian.ts.net`
-- `toronto-deployim-node-b.jaglion-ionian.ts.net`
+- node-a public IP: `150.230.27.121`
+- node-b public IP: `147.5.108.22`
 
 Remote app path:
 
@@ -19,7 +19,6 @@ Workflow behavior:
 - can also run manually with `workflow_dispatch`
 - builds/checks API
 - builds web-c CSS
-- joins Tailscale
 - rsyncs the repo to both nodes without overwriting `.env` files
 - runs `scripts/deploy-oracle-node.sh` on each node
 - restarts `msc-api.service` and `web-c.service`
@@ -29,18 +28,10 @@ Workflow behavior:
 GitHub secrets:
 
 - `ORACLE_DEPLOY_SSH_KEY` is already set in `wolfassets/mightysweetbakingco`
-- `TS_OAUTH_CLIENT_ID` is already set in `wolfassets/mightysweetbakingco`
-- `TS_OAUTH_SECRET` is already set in `wolfassets/mightysweetbakingco`
 
-Tailscale OAuth requirements:
+Tailscale note:
 
-- the OAuth client must be allowed to apply `tag:ci`
-- the tailnet ACL must let `tag:ci` reach TCP port `22` on node-a and node-b
-
-Created Tailscale credential:
-
-- description: `github-actions-mightysweet-oracle-deploy`
-- scope: `auth_keys`
-- tag: `tag:ci`
+- GitHub Actions originally joined Tailscale with `tag:ci`, but the tailnet ACL blocked SSH to the nodes.
+- The workflow currently deploys over public SSH to avoid that ACL dependency.
 
 The deploy key public half is installed in `~ubuntu/.ssh/authorized_keys` on both nodes.
