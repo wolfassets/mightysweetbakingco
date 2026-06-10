@@ -1,0 +1,124 @@
+name: Deploy Oracle nodes
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: oracle-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_DIR: /home/ubuntu/services/mightysweet
+  NODE_VERSION: "22"
+  PNPM_VERSION: "11.5.3"
+
+jobs:
+  build-check:
+    name: Build check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: API typecheck
+        run: pnpm --filter @mightysweet/api typecheck
+
+      - name: API build
+        run: pnpm --filter @mightysweet/api build
+
+      - name: web-c CSS build
+        run: pnpm --filter @mightysweet/web-c build:css
+
+      - name: web-c typecheck
+        run: pnpm --filter @mightysweet/web-c typecheck
+
+  deploy:
+    name: Deploy ${{ matrix.name }}
+    needs: build-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: node-a
+            host: toronto-deployim-node-a.jaglion-ionian.ts.net
+          - name: node-b
+            host: toronto-deployim-node-b.jaglion-ionian.ts.net
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Join Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          hostname: gha-mightysweet-${{ matrix.name }}-${{ github.run_id }}
+          targets: ${{ matrix.host }}
+          version: latest
+
+      - name: Write SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.ORACLE_DEPLOY_SSH_KEY }}" > ~/.ssh/oracle-deploy
+          chmod 600 ~/.ssh/oracle-deploy
+
+      - name: Trust host key
+        run: |
+          ssh-keyscan -t ed25519,rsa "${{ matrix.host }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Sync repo to ${{ matrix.name }}
+        run: |
+          rsync -az --delete \
+            --exclude='.git/' \
+            --exclude='node_modules/' \
+            --exclude='apps/*/node_modules/' \
+            --exclude='.next/' \
+            --exclude='apps/*/.next/' \
+            --exclude='dist/' \
+            --exclude='.turbo/' \
+            --exclude='.DS_Store' \
+            --exclude='.env' \
+            --exclude='.env.local' \
+            --exclude='.env.production' \
+            -e "ssh -i ~/.ssh/oracle-deploy -o StrictHostKeyChecking=yes" \
+            ./ "ubuntu@${{ matrix.host }}:${APP_DIR}/"
+
+      - name: Run remote deploy on ${{ matrix.name }}
+        run: |
+          ssh -i ~/.ssh/oracle-deploy -o StrictHostKeyChecking=yes "ubuntu@${{ matrix.host }}" \
+            "APP_DIR='${APP_DIR}' bash '${APP_DIR}/scripts/deploy-oracle-node.sh'"
+
+      - name: Verify remote services on ${{ matrix.name }}
+        run: |
+          ssh -i ~/.ssh/oracle-deploy -o StrictHostKeyChecking=yes "ubuntu@${{ matrix.host }}" \
+            "curl -fsS http://127.0.0.1:3000/health >/dev/null && curl -fsS http://127.0.0.1:4002/_health >/dev/null"
+
+  smoke-test:
+    name: Public smoke test
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: API load balancer health
+        run: curl -fsS --retry 20 --retry-delay 2 https://api.mightysweetbakingco.services.deployim.com/health

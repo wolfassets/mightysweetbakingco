@@ -1,0 +1,53 @@
+# Kamal 2 deploy configuration
+# Run: kamal deploy
+# Docs: https://kamal-deploy.org
+
+service: msc-api
+image: ghcr.io/YOUR_GITHUB_ORG/msc-api  # TODO: update with your GitHub org/repo
+
+# Single Hetzner server
+servers:
+  web:
+    hosts:
+      - YOUR_SERVER_IP  # TODO: replace with your Hetzner server IP
+    options:
+      network: msc
+
+registry:
+  server: ghcr.io
+  username:
+    - KAMAL_REGISTRY_USERNAME   # set in .kamal/secrets
+  password:
+    - KAMAL_REGISTRY_PASSWORD   # set in .kamal/secrets (GitHub PAT with packages:write)
+
+builder:
+  arch: amd64
+  dockerfile: Dockerfile
+  context: .
+
+env:
+  clear:
+    PORT: "3000"
+    NODE_ENV: production
+    REDIS_URL: /var/run/redis/redis.sock
+  secret:
+    - TURSO_DATABASE_URL
+    - TURSO_AUTH_TOKEN
+    - CLERK_SECRET_KEY
+    - CLERK_PUBLISHABLE_KEY
+
+# Health check endpoint — Kamal waits for this before completing the deploy
+healthcheck:
+  path: /health
+  port: 3000
+  max_attempts: 10
+  interval: 5s
+
+proxy:
+  ssl: true
+  host: api.mightysweetcookies.com
+  app_port: 3000
+
+# Zero-downtime rolling deploy
+deploy_timeout: 30
+drain_timeout: 30

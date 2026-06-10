@@ -1,0 +1,57 @@
+# Production deploy stack for the Mighty Sweet Cookies api.
+# Brings up: a Redis cache + the api itself, on an internal Docker network.
+# nginx-proxy-manager (running externally on the host) terminates TLS on
+# port 443 and reverse-proxies api.mightysweetbakingco.com → api:3000 inside
+# this network.
+#
+# Usage on the VM:
+#   git clone git@github.com:wolfassets/mightysweetbakingco.api.git
+#   cd mightysweetbakingco.api
+#   scp -i ~/Documents/SSH/oracle <local>/.env ubuntu@<vm>:~/services/api/.env
+#   docker compose up -d --build
+#
+# Reach NPM admin at http://<vm>:81 to wire up the proxy host.
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: msc-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    networks:
+      - msc
+
+  api:
+    build: .
+    image: msc-api:latest
+    container_name: msc-api
+    restart: unless-stopped
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    environment:
+      # Override the local-dev REDIS_URL — inside the compose network the
+      # cache is reachable as `redis` (the service name).
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+    networks:
+      - msc
+      # `nginx-proxy-manager_default` is the network NPM created when it
+      # started. Joining it lets NPM resolve `msc-api` by container name when
+      # adding the proxy host pointing here. If your NPM network name differs,
+      # rename below or attach to it via `docker network connect`.
+      - npm
+    expose:
+      - "3000"
+
+volumes:
+  redis-data:
+
+networks:
+  msc:
+  npm:
+    external: true
+    name: nginx-proxy-manager_default

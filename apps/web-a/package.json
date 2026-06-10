@@ -1,0 +1,53 @@
+{
+  "name": "@mightysweet/web-a",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack --port 4000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/bricolage-grotesque": "^5.2.10",
+    "@libsql/client": "^0.17.0",
+    "@tailwindcss/oxide-darwin-x64": "^4.2.1",
+    "@tailwindcss/postcss": "^4.1.18",
+    "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.45.1",
+    "framer-motion": "^12.38.0",
+    "geist": "^1.5.1",
+    "jspdf": "^4.2.0",
+    "next": "^16.2.6",
+    "react": "^19.2.4",
+    "react-day-picker": "^9.13.0",
+    "react-dom": "^19.2.4",
+    "react-quill-new": "^3.8.3",
+    "recharts": "^3.7.0",
+    "tailwindcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.11",
+    "@types/react-dom": "^19.2.3",
+    "drizzle-kit": "^0.31.8",
+    "typescript": "^5.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "@clerk/shared",
+      "@lng2004/node-datachannel",
+      "@seydx/node-av-darwin-arm64",
+      "core-js",
+      "esbuild",
+      "node-av",
+      "node-datachannel",
+      "sharp",
+      "zeromq"
+    ]
+  }
+}

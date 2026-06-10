@@ -1,1 +1,13 @@
-onlyBuiltDependencies: better-sqlite3,esbuild,sharp
+packages:
+  - 'apps/web-a'
+  - 'apps/web-b'
+  - 'apps/web-c'
+  - 'apps/api'
+
+# `apps/ios` is intentionally excluded — it's a SwiftUI/Xcode project,
+# not a Node package.
+
+onlyBuiltDependencies:
+  - better-sqlite3
+  - esbuild
+  - sharp

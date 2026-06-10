@@ -1,0 +1,33 @@
+[Unit]
+Description=Mighty Sweet Cookies API (Hono/Node)
+After=network.target redis.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=msc
+Group=msc
+WorkingDirectory=/opt/msc-api
+
+# All secrets come from this file — never checked in to source control
+EnvironmentFile=/etc/msc-api/env
+
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=msc-api
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/msc-api
+
+# Node memory limit (adjust to server RAM)
+Environment=NODE_OPTIONS=--max-old-space-size=512
+
+[Install]
+WantedBy=multi-user.target

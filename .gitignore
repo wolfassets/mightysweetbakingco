@@ -11,6 +11,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+package-lock.json
 
 
 # environment variables
@@ -28,3 +29,34 @@ pnpm-debug.log*
 .idea/
 cookies.db
 .vercel
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.bbl
+*.blg
+*.out
+*.toc
+*.synctex.gz
+# (keep .tex source + final .pdf)
+
+# Xcode build artifacts
+apps/ios/build/
+apps/ios/DerivedData/
+apps/ios/**/*.xcuserstate
+apps/ios/**/xcuserdata/
+
+# pnpm
+.pnpm-store/
+
+# local editor leftovers
+apps/web-c/src/views/Dashboard.tsx-e
+
+# split-repo workflow copies are inert inside app subdirectories
+apps/*/.github/

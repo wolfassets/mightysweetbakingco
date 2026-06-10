@@ -1,0 +1,33 @@
+api.mightysweetcookies.com {
+    # Automatic TLS via Let's Encrypt
+    tls {
+        # Caddy handles ACME automatically — no further config needed
+    }
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    # SSE endpoint: disable buffering so events flush immediately
+    @sse path /stream*
+    header @sse {
+        Cache-Control "no-cache"
+        X-Accel-Buffering "no"
+    }
+
+    reverse_proxy localhost:3000 {
+        # Health check used by Caddy itself (optional)
+        health_uri /health
+        health_interval 10s
+        health_timeout 5s
+
+        # Forward real IP
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
